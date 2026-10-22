@@ -1,0 +1,82 @@
+name: test-e2e
+version: '3.8'
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: petclinic-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: petclinic
+      POSTGRES_DB: petclinic
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d petclinic"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    image: spring-petclinic-rest:latest
+    pull_policy: never
+    container_name: petclinic-backend
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: always
+    environment:
+      SPRING_PROFILES_ACTIVE: postgresql,spring-data-jpa
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/petclinic
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: petclinic
+    ports:
+      - "9966:9966"
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        BUILD_ENV: ephemeral
+    container_name: petclinic-frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+
+  selenium-hub:
+    image: selenium/hub:4.23.1-20240820
+    container_name: selenium-hub
+    ports:
+      - "4442:4442"
+      - "4443:4443"
+      - "4444:4444"
+
+  chrome:
+    image: selenium/node-chrome:4.23.1-20240820
+    shm_size: 2gb
+    depends_on:
+      - selenium-hub
+    environment:
+      SE_EVENT_BUS_HOST: selenium-hub
+      SE_EVENT_BUS_PUBLISH_PORT: 4442
+      SE_EVENT_BUS_SUBSCRIBE_PORT: 4443
+
+  edge:
+    image: selenium/node-edge:4.23.1-20240820
+    shm_size: 2gb
+    depends_on:
+      - selenium-hub
+    environment:
+      SE_EVENT_BUS_HOST: selenium-hub
+      SE_EVENT_BUS_PUBLISH_PORT: 4442
+      SE_EVENT_BUS_SUBSCRIBE_PORT: 4443
+
+  firefox:
+    image: selenium/node-firefox:4.23.1-20240820
+    shm_size: 2gb
+    depends_on:
+      - selenium-hub
+    environment:
+      SE_EVENT_BUS_HOST: selenium-hub
+      SE_EVENT_BUS_PUBLISH_PORT: 4442
+      SE_EVENT_BUS_SUBSCRIBE_PORT: 4443
