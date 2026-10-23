@@ -22,8 +22,6 @@ pipeline {
         stage('End2End Tests') {
             steps {
                 sh 'sleep 3m'
-                // Nota: Si el pom.xml está dentro de una subcarpeta llamada e2e-tests, usa -w /usr/src/app/e2e-tests
-                // Si el pom.xml está en la raíz, se mantiene -w /usr/src/app
                 sh """
                     docker run --rm \
                       -v ${WORKSPACE}:/usr/src/app \
@@ -53,11 +51,10 @@ pipeline {
     }
     post {
         always {
-            sh "docker compose --project-name ${BUILD_TAG} down --volumes"
+            sh "docker compose --project-name ${BUILD_TAG} down --rmi all --volumes"
             sh 'docker builder prune -f'
             sh 'docker system df'
             cleanWs()
         }
     }
 }
-//sh "docker compose --project-name ${BUILD_TAG} down --rmi all --volumes"
