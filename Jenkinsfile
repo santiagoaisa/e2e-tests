@@ -29,8 +29,8 @@ pipeline {
 
                         sh '''
                                             echo "--- Verificando respuesta HTTP de petclinic-frontend ---"
-                                            curl -I http://petclinic-frontend:8080/ || true
-                                            curl -I http://petclinic-frontend:8080/petclinic/ || true
+                                            curl -I http://petclinic-frontend:80/ || true
+                                            curl -I http://petclinic-frontend:80/petclinic/ || true
                                         '''
 
                         // Ejecución directa de Maven con el wrapper
@@ -40,7 +40,7 @@ pipeline {
                               -Dwebdriver.remote.url=http://selenium-hub:4444/wd/hub \
                               -Dwebdriver.remote.driver=${params.BROSWER} \
                               -Denvironment=${params.ENVIRONMENT} \
-                              -Dwebdriver.base.url=http://petclinic-frontend:8080/ \
+                              -Dwebdriver.base.url=http://petclinic-frontend:80/ \
                               -Dcucumber.filter.tags="${params.TAGS}"
                         """
 
