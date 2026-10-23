@@ -22,27 +22,26 @@ pipeline {
             steps {
                             sh 'sleep 1m'
 
-                            // 1. Asegura que los archivos del repositorio existan antes de llamar a Maven
-                            checkout scm
-
                             // 2. Diagnóstico: Verifica que pom.xml aparezca en la lista
                             sh 'pwd'
                             sh 'ls -la ${WORKSPACE}'
 
                             sh """
-                                docker run --rm \
-                                  -v ${WORKSPACE}:/usr/src/app \
-                                  -w /usr/src/app \
-                                  --name ${BUILD_TAG} \
-                                  --network ${BUILD_TAG}_default \
-                                  maven:3.8.8-eclipse-temurin-17 \
-                                  mvn clean verify -B -ntp \
-                                    -Dwebdriver.remote.url=http://selenium-hub:4444/wd/hub \
-                                    -Dwebdriver.remote.driver=${params.BROSWER} \
-                                    -Denvironment=${params.ENVIRONMENT} \
-                                    -Dwebdriver.base.url=http://petclinic-frontend:8080/petclinic/ \
-                                    -Dcucumber.filter.tags="${params.TAGS}"
-                            """
+                                                docker run --rm \
+                                                  --user root \
+                                                  -v ${WORKSPACE}:/usr/src/app \
+                                                  -w /usr/src/app \
+                                                  --name ${BUILD_TAG} \
+                                                  --network ${BUILD_TAG}_default \
+                                                  maven:3.8.8-eclipse-temurin-17 \
+                                                  mvn clean verify -B -ntp \
+                                                    -Dwebdriver.remote.url=http://selenium-hub:4444/wd/hub \
+                                                    -Dwebdriver.remote.driver=${params.BROSWER} \
+                                                    -Denvironment=${params.ENVIRONMENT} \
+                                                    -Dwebdriver.base.url=http://petclinic-frontend:8080/petclinic/ \
+                                                    -Dcucumber.filter.tags="${params.TAGS}"
+                                            """
+
                             publishHTML(
                                 target: [
                                     reportName           : 'Serenity Report',
@@ -58,10 +57,9 @@ pipeline {
     }
     post {
         always {
-            sh "docker compose --project-name ${BUILD_TAG} down --rmi all --volumes"
+            sh "docker compose --project-name ${BUILD_TAG} down --volumes"
             sh 'docker builder prune -f'
             sh 'docker system df'
-            cleanWs()
         }
     }
 }
