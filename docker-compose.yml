@@ -38,7 +38,7 @@ services:
     ports:
       - "8082:8080"
     depends_on:
-      - petclinic-backend
+      - backend
 
   selenium-hub:
     image: selenium/hub:latest
