@@ -8,14 +8,8 @@ pipeline {
     stages {
         stage('Prepare environment') {
             steps {
-                // 1. Forzar la descarga del repositorio E2E actual en la raíz del Workspace
+                // Descarga única del código de pruebas E2E a la raíz del Workspace
                 checkout scm
-
-                // 2. Clonar el frontend en su subcarpeta dedicada
-                dir('frontend'){
-                    git branch: "master",
-                    url: "https://github.com/devops-mitocode/spring-petclinic-angular.git"
-                }
 
                 sh 'env | sort'
                 sh 'docker system df'
@@ -56,10 +50,12 @@ pipeline {
     }
     post {
         always {
-            sh "docker compose --project-name ${BUILD_TAG} down --rmi all --volumes"
+            sh "docker compose --project-name ${BUILD_TAG} down --volumes"
             sh 'docker builder prune -f'
             sh 'docker system df'
             cleanWs()
         }
     }
 }
+
+sh "docker compose --project-name ${BUILD_TAG} down --rmi all --volumes"

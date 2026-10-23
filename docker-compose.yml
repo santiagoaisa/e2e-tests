@@ -32,16 +32,13 @@ services:
     ports:
       - "9966:9966"
 
-  frontend:
-    build:
-      context: ./frontend
-      args:
-        BUILD_ENV: ephemeral
+  petclinic-frontend:
+    image: spring-petclinic-angular:latest
     container_name: petclinic-frontend
     ports:
-      - "8082:80"
+      - "8082:8080"
     depends_on:
-      - backend
+      - petclinic-backend
 
   selenium-hub:
     image: selenium/hub:latest
