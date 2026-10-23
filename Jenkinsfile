@@ -26,21 +26,15 @@ pipeline {
                             sh 'pwd'
                             sh 'ls -la ${WORKSPACE}'
 
+                           sh 'chmod +x ./mvnw'
                            sh """
-                                               docker run --rm \
-                                                 --user root \
-                                                 --volumes-from \$(hostname) \
-                                                 -w ${WORKSPACE} \
-                                                 --name ${BUILD_TAG} \
-                                                 --network ${BUILD_TAG}_default \
-                                                 maven:3.8.8-eclipse-temurin-17 \
-                                                 mvn clean verify -B -ntp \
-                                                   -Dwebdriver.remote.url=http://selenium-hub:4444/wd/hub \
-                                                   -Dwebdriver.remote.driver=${params.BROSWER} \
-                                                   -Denvironment=${params.ENVIRONMENT} \
-                                                   -Dwebdriver.base.url=http://petclinic-frontend:8080/petclinic/ \
-                                                   -Dcucumber.filter.tags="${params.TAGS}"
-                                           """
+                                               ./mvnw clean verify -B -ntp \
+                                                 -Dwebdriver.remote.url=http://selenium-hub:4444/wd/hub \
+                                                 -Dwebdriver.remote.driver=${params.BROSWER} \
+                                                 -Denvironment=${params.ENVIRONMENT} \
+                                                 -Dwebdriver.base.url=http://petclinic-frontend:8080/petclinic/ \
+                                                 -Dcucumber.filter.tags="${params.TAGS}"
+                           """
 
                             publishHTML(
                                 target: [
