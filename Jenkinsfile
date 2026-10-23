@@ -27,6 +27,12 @@ pipeline {
                         // Espera activa a que el frontend responda dentro de la red Docker
                         sh 'sleep 1m'
 
+                        sh '''
+                                            echo "--- Verificando respuesta HTTP de petclinic-frontend ---"
+                                            curl -I http://petclinic-frontend:8080/ || true
+                                            curl -I http://petclinic-frontend:8080/petclinic/ || true
+                                        '''
+
                         // Ejecución directa de Maven con el wrapper
                         sh 'chmod +x ./mvnw'
                         sh """
@@ -34,7 +40,7 @@ pipeline {
                               -Dwebdriver.remote.url=http://selenium-hub:4444/wd/hub \
                               -Dwebdriver.remote.driver=${params.BROSWER} \
                               -Denvironment=${params.ENVIRONMENT} \
-                              -Dwebdriver.base.url=http://petclinic-frontend:8080/petclinic/ \
+                              -Dwebdriver.base.url=http://petclinic-frontend:8080/ \
                               -Dcucumber.filter.tags="${params.TAGS}"
                         """
 
@@ -55,6 +61,7 @@ pipeline {
     }
     post {
         always {
+            sh "docker network disconnect ${BUILD_TAG}_default \$(hostname) || true"
             sh "docker compose --project-name ${BUILD_TAG} down --volumes"
             sh 'docker builder prune -f'
             sh 'docker system df'
