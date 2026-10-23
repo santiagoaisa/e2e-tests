@@ -18,42 +18,47 @@ pipeline {
                 sh 'docker network ls'
             }
         }
+
         stage('End2End Tests') {
-            steps {
-                            sh 'sleep 1m'
+                    steps {
+                        // Conecta el contenedor de Jenkins a la red de Docker Compose
+                        sh "docker network connect ${BUILD_TAG}_default \$(hostname)"
 
-                            // 2. Diagnóstico: Verifica que pom.xml aparezca en la lista
-                            sh 'pwd'
-                            sh 'ls -la ${WORKSPACE}'
+                        // Espera activa a que el frontend responda dentro de la red Docker
+                        sh 'sleep 1m'
 
-                           sh 'chmod +x ./mvnw'
-                           sh """
-                                               ./mvnw clean verify -B -ntp \
-                                                 -Dwebdriver.remote.url=http://selenium-hub:4444/wd/hub \
-                                                 -Dwebdriver.remote.driver=${params.BROSWER} \
-                                                 -Denvironment=${params.ENVIRONMENT} \
-                                                 -Dwebdriver.base.url=http://petclinic-frontend:8080/petclinic/ \
-                                                 -Dcucumber.filter.tags="${params.TAGS}"
-                           """
+                        // Ejecución directa de Maven con el wrapper
+                        sh 'chmod +x ./mvnw'
+                        sh """
+                            ./mvnw clean verify -B -ntp \
+                              -Dwebdriver.remote.url=http://selenium-hub:4444/wd/hub \
+                              -Dwebdriver.remote.driver=${params.BROSWER} \
+                              -Denvironment=${params.ENVIRONMENT} \
+                              -Dwebdriver.base.url=http://petclinic-frontend:8080/petclinic/ \
+                              -Dcucumber.filter.tags="${params.TAGS}"
+                        """
 
-                            publishHTML(
-                                target: [
-                                    reportName           : 'Serenity Report',
-                                    reportDir            : 'target/site/serenity',
-                                    reportFiles          : 'index.html',
-                                    keepAll              : true,
-                                    alwaysLinkToLastBuild: true,
-                                    allowMissing         : false
-                                ]
-                            )
-                        }
-        }
+                        publishHTML(
+                            target: [
+                                reportName           : 'Serenity Report',
+                                reportDir            : 'target/site/serenity',
+                                reportFiles          : 'index.html',
+                                keepAll              : true,
+                                alwaysLinkToLastBuild: true,
+                                allowMissing         : false
+                            ]
+                        )
+                    }
+                }
+
+
     }
     post {
         always {
             sh "docker compose --project-name ${BUILD_TAG} down --volumes"
             sh 'docker builder prune -f'
             sh 'docker system df'
+            cleanWs()
         }
     }
 }
