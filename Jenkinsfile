@@ -22,8 +22,22 @@ pipeline {
         stage('End2End Tests') {
             steps {
                 sh 'sleep 3m'
-//                sh "docker run --rm -v ${WORKSPACE}:/usr/src/app -w /usr/src/app --name ${BUILD_TAG} --network ${BUILD_TAG}_default maven:3.8.8-eclipse-temurin-17 sleep 5m"
-                sh "docker run --rm -v ${WORKSPACE}:/usr/src/app -w /usr/src/app  --name ${BUILD_TAG} --network ${BUILD_TAG}_default maven:3.8.8-eclipse-temurin-17 mvn clean verify -B -ntp -Dwebdriver.remote.url=http://selenium-hub:4444/wd/hub -Dwebdriver.remote.driver=${BROSWER} -Denvironment=${ENVIRONMENT} -Dwebdriver.base.url=http://frontend:8080 -Dcucumber.filter.tags=\"${TAGS}\""
+                // Nota: Si el pom.xml está dentro de una subcarpeta llamada e2e-tests, usa -w /usr/src/app/e2e-tests
+                // Si el pom.xml está en la raíz, se mantiene -w /usr/src/app
+                sh """
+                    docker run --rm \
+                      -v ${WORKSPACE}:/usr/src/app \
+                      -w /usr/src/app \
+                      --name ${BUILD_TAG} \
+                      --network ${BUILD_TAG}_default \
+                      maven:3.8.8-eclipse-temurin-17 \
+                      mvn clean verify -B -ntp \
+                        -Dwebdriver.remote.url=http://selenium-hub:4444/wd/hub \
+                        -Dwebdriver.remote.driver=${params.BROSWER} \
+                        -Denvironment=${params.ENVIRONMENT} \
+                        -Dwebdriver.base.url=http://petclinic-frontend:8080/petclinic/ \
+                        -Dcucumber.filter.tags="${params.TAGS}"
+                """
                 publishHTML(
                     target: [
                         reportName           : 'Serenity Report',
@@ -39,7 +53,6 @@ pipeline {
     }
     post {
         always {
-            //sh "docker compose --project-name ${BUILD_TAG} down --rmi all --volumes"
             sh "docker compose --project-name ${BUILD_TAG} down --volumes"
             sh 'docker builder prune -f'
             sh 'docker system df'
@@ -47,3 +60,4 @@ pipeline {
         }
     }
 }
+//sh "docker compose --project-name ${BUILD_TAG} down --rmi all --volumes"
