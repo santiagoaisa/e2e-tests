@@ -20,9 +20,12 @@ pipeline {
         }
         stage('End2End Tests') {
             steps {
-                            sh 'sleep 3m'
+                            sh 'sleep 1m'
 
-                            // Diagnostic step: Imprime la ruta y lista los archivos en la raíz del workspace
+                            // 1. Asegura que los archivos del repositorio existan antes de llamar a Maven
+                            checkout scm
+
+                            // 2. Diagnóstico: Verifica que pom.xml aparezca en la lista
                             sh 'pwd'
                             sh 'ls -la ${WORKSPACE}'
 
